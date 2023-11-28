@@ -26,5 +26,4 @@ extern HINSTANCE hAppInstance;
 
 #define strcasecmp _stricmp
 
-
 #endif
