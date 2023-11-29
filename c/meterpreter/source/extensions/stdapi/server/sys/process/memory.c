@@ -341,10 +341,13 @@ DWORD request_sys_process_memory_unlock(Remote *remote, Packet *packet)
 	return ERROR_SUCCESS;
 }
 
-typedef __success(return >= 0) LONG NTSTATUS;
 typedef NTSTATUS* PNTSTATUS;
 
 #define NT_SUCCESS(Status) ((NTSTATUS)(Status) >= 0)
+
+#ifndef __kernel_entry
+    #define __kernel_entry
+#endif
 
 typedef __kernel_entry NTSTATUS(WINAPI* NTQUERYINFORMATIONPROCESS) (HANDLE ProcessHandle, DWORD ProcessInformationClass, LPVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
 
@@ -579,7 +582,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	// The maximum length of data that we can read into a buffer at a time from a memory region.
 	const size_t current_max_size = megabytes_64;
 
-	for (PVOID current_ptr = NULL; VirtualQueryEx(process_handle, current_ptr, &mem, sizeof(mem)); (size_t)current_ptr += mem.RegionSize)
+	for (size_t current_ptr = 0; VirtualQueryEx(process_handle, (LPCVOID)current_ptr, &mem, sizeof(mem)); current_ptr += mem.RegionSize)
 	{
 		if (!can_read_memory(mem.Protect)) { continue; }
 
@@ -598,7 +601,9 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 
 			const size_t read_address = (size_t)mem.BaseAddress + memory_region_offset;
 			// Note: This will read up to a maximum of bytes_to_read OR to the end of the memory region if the end of it has been reached.
-			NtReadVirtualMemory(process_handle, (LPCVOID)read_address, buffer, bytes_to_read, &bytes_read);
+			const NTSTATUS read_virtual_memory_status = NtReadVirtualMemory(process_handle, (LPCVOID)read_address, buffer, bytes_to_read, &bytes_read);
+			if (read_virtual_memory_status == FALSE) { dprintf("[MEM SEARCH] Failed to read virtual memory for process"); continue; }
+
 			dprintf("[MEM SEARCH] Read %llu bytes", bytes_read);
 			// Note: Increment the offset so that we aren't stuck in an infinite loop, trying to read zero bytes from the same pointer.
 			if (bytes_read == 0) { dprintf("[MEM SEARCH] Read zero bytes from a readable memory region"); memory_region_offset += bytes_to_read; continue; }
