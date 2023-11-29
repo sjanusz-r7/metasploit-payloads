@@ -518,9 +518,6 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 
 		dprintf("[MEM SEARCH] Needle %u : %.*s with size (in bytes) %u", needle_enum_index, needle_length, regex_needles[needle_enum_index]->raw_needle_buffer, needle_length);
 
-		regex_needles[needle_enum_index]->compiled_needle = (regex_t*)malloc(sizeof(struct regex_t));
-		if (regex_needles[needle_enum_index]->compiled_needle == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for a compiled needle"); result = ERROR_OUTOFMEMORY; goto done; }
-
 		dprintf("[MEM SEARCH] Compiling needle: %.*s", needle_length, (char*)needle_buffer_tlv.buffer);
 		regex_needles[needle_enum_index]->compiled_needle = re_compile(regex_needles[needle_enum_index]->raw_needle_buffer, regex_needles[needle_enum_index]->length);
 		if (regex_needles[needle_enum_index]->compiled_needle == NULL) { dprintf("[MEM SEARCH] Failed to compile needle"); result = ERROR_OUTOFMEMORY; goto done; }
