@@ -496,7 +496,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	while (needle_enum_index < (size_t)NEEDLES_MAX && met_api->packet.enum_tlv(packet, (DWORD)needle_enum_index, TLV_TYPE_MEMORY_SEARCH_NEEDLE, &needle_buffer_tlv) == ERROR_SUCCESS)
 	{
 		size_t needle_length = 0;
-		if (met_api->packet.enum_tlv(packet, (DWORD)needle_enum_index, TLV_TYPE_MEMORY_SEARCH_NEEDLE_LENGTH, &needle_length_tlv) != ERROR_SUCCESS)
+		if (met_api->packet.enum_tlv(packet, (DWORD)needle_enum_index, TLV_TYPE_MEMORY_SEARCH_NEEDLE_LEN, &needle_length_tlv) != ERROR_SUCCESS)
 		{
 			dprintf("[MEM SEARCH] Got needle, but no length. Defaulting to using strlen, meaning null-bytes won't be searched for.");
 			needle_length = strlen((char*)needle_buffer_tlv.buffer);
@@ -532,8 +532,8 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 
 	dprintf("[MEM SEARCH] Getting Match Lengths");
 	const size_t min_match_length = met_api->packet.get_tlv_value_uint(packet, TLV_TYPE_UINT);
-	const size_t max_match_length = met_api->packet.get_tlv_value_uint(packet, TLV_TYPE_MEMORY_SEARCH_MATCH_LEN_MAX);
-	if (min_match_length > max_match_length || max_match_length == 0) { dprintf("[MEM SEARCH] Incrrect min or max match lengths"); result = ERROR_INVALID_PARAMETER; goto done; }
+	const size_t max_match_length = met_api->packet.get_tlv_value_uint(packet, TLV_TYPE_MEMORY_SEARCH_MATCH_LEN);
+	if (min_match_length > max_match_length || max_match_length == 0) { dprintf("[MEM SEARCH] Incorrect min or max match lengths"); result = ERROR_INVALID_PARAMETER; goto done; }
 	const size_t current_max_match_length = max_match_length;
 
 	dprintf("[MEM SEARCH] Getting handles & proc addresses");
