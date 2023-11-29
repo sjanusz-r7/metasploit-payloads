@@ -481,7 +481,6 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 {
 	Packet* response = met_api->packet.create_response(packet);
 	DWORD result = ERROR_SUCCESS;
-	char* needle = NULL;
 	char* buffer = NULL;
 	size_t needle_enum_index = 0;
 	
@@ -508,24 +507,23 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 			needle_length = ntohl(*(PUINT)needle_length_tlv.buffer);
 			dprintf("[MEM SEARCH] Needle length: %u", needle_length);
 		}
-		dprintf("[MEM SEARCH] Allocating memory for regex needle: %u", sizeof(struct regex_needle));
+		dprintf("[MEM SEARCH] Allocating %u bytes of memory for regex needle", sizeof(struct regex_needle));
 		regex_needles[needle_enum_index] = (struct regex_needle*)malloc(sizeof(struct regex_needle));
 		if (regex_needles[needle_enum_index] == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for regex needle"); result = ERROR_OUTOFMEMORY; goto done; }
 
 		regex_needles[needle_enum_index]->length = needle_length;
-		regex_needles[needle_enum_index]->raw_needle_buffer = (char*)malloc(needle_length) + 1;
+		regex_needles[needle_enum_index]->raw_needle_buffer = (char*)malloc(needle_length);
 		if (regex_needles[needle_enum_index]->raw_needle_buffer == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for raw needle buffer"); result = ERROR_OUTOFMEMORY; goto done; }
-		memset(regex_needles[needle_enum_index]->raw_needle_buffer, 0, needle_length + 1);
 		memcpy(regex_needles[needle_enum_index]->raw_needle_buffer, (char*)needle_buffer_tlv.buffer, needle_length);
 
-		// Note: This won't work with null-bytes.
-		dprintf("[MEM SEARCH] Needle %u : %s with length %u", needle_enum_index, regex_needles[needle_enum_index]->raw_needle_buffer, needle_length);
+		dprintf("[MEM SEARCH] Needle %u : %.*s with size (in bytes) %u", needle_enum_index, needle_length, regex_needles[needle_enum_index]->raw_needle_buffer, needle_length);
 
 		regex_needles[needle_enum_index]->compiled_needle = (regex_t*)malloc(sizeof(struct regex_t));
 		if (regex_needles[needle_enum_index]->compiled_needle == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for a compiled needle"); result = ERROR_OUTOFMEMORY; goto done; }
 
-		dprintf("[MEM SEARCH] Compiling needle: %s", (char*)needle_buffer_tlv.buffer);
+		dprintf("[MEM SEARCH] Compiling needle: %.*s", needle_length, (char*)needle_buffer_tlv.buffer);
 		regex_needles[needle_enum_index]->compiled_needle = re_compile(regex_needles[needle_enum_index]->raw_needle_buffer, regex_needles[needle_enum_index]->length);
+		if (regex_needles[needle_enum_index]->compiled_needle == NULL) { dprintf("[MEM SEARCH] Failed to compile needle"); result = ERROR_OUTOFMEMORY; goto done; }
 
 		needle_enum_index++;
 	}
@@ -680,17 +678,11 @@ done:
 	{
 		if (regex_needles[i] != NULL)
 		{
-			/*if (regex_needles[i]->raw_needle_buffer != NULL)
+			if (regex_needles[i]->raw_needle_buffer != NULL)
 			{
 				dprintf("[MEM SEARCH] Freeing needle buffer");
 				free(regex_needles[i]->raw_needle_buffer);
 			}
-
-			if (regex_needles[i]->compiled_needle != NULL)
-			{
-				dprintf("[MEM SEARCH] Freeing compiled needle.");
-				free(regex_needles[i]->compiled_needle);
-			}*/
 
 			dprintf("[MEM SEARCH] Freeing regex needle.");
 			free(regex_needles[i]);
