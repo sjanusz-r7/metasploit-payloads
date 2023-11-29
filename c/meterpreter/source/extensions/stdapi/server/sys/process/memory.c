@@ -602,7 +602,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 			const size_t read_address = (size_t)mem.BaseAddress + memory_region_offset;
 			// Note: This will read up to a maximum of bytes_to_read OR to the end of the memory region if the end of it has been reached.
 			const NTSTATUS read_virtual_memory_status = NtReadVirtualMemory(process_handle, (LPCVOID)read_address, buffer, bytes_to_read, &bytes_read);
-			if (read_virtual_memory_status == FALSE) { dprintf("[MEM SEARCH] Failed to read virtual memory for process"); continue; }
+			if (read_virtual_memory_status != ERROR_SUCCESS) { dprintf("[MEM SEARCH] Failed to read some virtual memory for process, skipping %u bytes", bytes_to_read); continue; }
 
 			dprintf("[MEM SEARCH] Read %llu bytes", bytes_read);
 			// Note: Increment the offset so that we aren't stuck in an infinite loop, trying to read zero bytes from the same pointer.
