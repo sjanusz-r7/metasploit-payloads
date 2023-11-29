@@ -102,7 +102,7 @@ re_t re_compile(const char* pattern, size_t pattern_length)
   int i = 0;  /* index into pattern        */
   int j = 0;  /* index into re_compiled    */
 
-  while (i < pattern_length && (j+1 < MAX_REGEXP_OBJECTS))
+  while (i < (int)pattern_length && (j+1 < MAX_REGEXP_OBJECTS))
   {
     c = pattern[i];
 
@@ -120,7 +120,7 @@ re_t re_compile(const char* pattern, size_t pattern_length)
       /* Escaped character-classes (\s \w ...): */
       case '\\':
       {
-        if (i + 1 < pattern_length)
+        if (i + 1 < (int)pattern_length)
         {
           /* Skip the escape-char '\\' */
           i += 1;
