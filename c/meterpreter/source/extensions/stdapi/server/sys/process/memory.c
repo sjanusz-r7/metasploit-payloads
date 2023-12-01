@@ -655,7 +655,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 						const size_t current_match_length = min(max_match_length, match_length);
 					
 						// Note: This raw data needs to be read from the buffer we copied. Trying to read it from mem.BaseAddress directly will make us crash.
-						met_api->packet.add_tlv_raw(search_results, TLV_TYPE_MEMORY_SEARCH_MATCH_STR, buffer + current_buffer_offset + result, (DWORD)current_match_length);
+						met_api->packet.add_tlv_raw(search_results, TLV_TYPE_MEMORY_SEARCH_MATCH_STR, buffer + current_buffer_offset + result, (DWORD)current_match_length + 1);
 
 						dprintf("[MEM SEARCH] Adding Match address");
 						met_api->packet.add_tlv_qword(search_results, TLV_TYPE_MEMORY_SEARCH_MATCH_ADDR, match_address);
