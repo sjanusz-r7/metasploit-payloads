@@ -483,6 +483,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	DWORD result = ERROR_SUCCESS;
 	char* buffer = NULL;
 	size_t needle_enum_index = 0;
+	HANDLE process_handle = NULL;
 	
 	dprintf("[MEM SEARCH] Getting PID...");
 	const DWORD pid = met_api->packet.get_tlv_value_uint(packet, TLV_TYPE_PID);
@@ -564,7 +565,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	const DWORD wanted_process_perms = process_vm_read | process_query_information;
 
 	dprintf("[MEM SEARCH] Opening process");
-	const HANDLE process_handle = OpenProcess(wanted_process_perms, FALSE, pid);
+	process_handle = OpenProcess(wanted_process_perms, FALSE, pid);
 	if (process_handle == NULL) { dprintf("[MEM SEARCH] Could not get process handle"); result = ERROR_INVALID_HANDLE; goto done; }
 
 	MEMORY_BASIC_INFORMATION mem = { 0 };
