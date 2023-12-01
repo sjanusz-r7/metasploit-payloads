@@ -129,14 +129,11 @@ int re_compile(const char* pattern, size_t pattern_length, size_t max_regex_obje
                 } break;
                 }
             }
-            /* '\\' as last char in pattern -> invalid regular expression. */
-    /*
             else
             {
-              (*out_compiled)[j].type = CHAR;
-              (*out_compiled)[j].ch = pattern[i];
+              (*out_compiled)[j].type = CHAR_RE;
+              (*out_compiled)[j].u.ch = pattern[i];
             }
-    */
         } break;
 
         /* Character class: */
@@ -150,7 +147,7 @@ int re_compile(const char* pattern, size_t pattern_length, size_t max_regex_obje
             {
                 (*out_compiled)[j].type = INV_CHAR_CLASS;
                 i += 1; /* Increment i to avoid including '^' in the char-buffer */
-                if (pattern[i + 1] == 0) /* incomplete pattern, missing non-zero char after '^' */
+                if (i + 1 == (int)pattern_length) /* incomplete pattern, missing non-zero char after '^' */
                 {
                     return 1;
                 }
@@ -171,7 +168,7 @@ int re_compile(const char* pattern, size_t pattern_length, size_t max_regex_obje
                         //fputs("exceeded internal buffer!\n", stderr);
                         return 1;
                     }
-                    if (pattern[i + 1] == 0) /* incomplete pattern, missing non-zero char after '\\' */
+                    if (i + 1 == (int)pattern_length) /* incomplete pattern, missing non-zero char after '\\' */
                     {
                         return 1;
                     }
@@ -201,11 +198,6 @@ int re_compile(const char* pattern, size_t pattern_length, size_t max_regex_obje
             (*out_compiled)[j].type = CHAR_RE;
             (*out_compiled)[j].u.ch = c;
         } break;
-        }
-        /* no buffer-out-of-bounds access on invalid patterns - see https://github.com/kokke/tiny-regex-c/commit/1a279e04014b70b0695fba559a7c05d55e6ee90b */
-        if (pattern[i] == 0)
-        {
-            return 1;
         }
 
         i += 1;
