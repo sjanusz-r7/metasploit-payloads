@@ -491,29 +491,18 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	dprintf("[MEM SEARCH] Searching PID: %lu", pid);
 
 	// Iterate over all the needles in the packet.
-	Tlv needle_buffer_tlv, needle_length_tlv;
+	Tlv needle_buffer_tlv = { 0 };
 	struct regex_needle* regex_needles[NEEDLES_MAX];
 	while (needle_enum_index < (size_t)NEEDLES_MAX && met_api->packet.enum_tlv(packet, (DWORD)needle_enum_index, TLV_TYPE_MEMORY_SEARCH_NEEDLE, &needle_buffer_tlv) == ERROR_SUCCESS)
 	{
-		size_t needle_length = 0;
-		if (met_api->packet.enum_tlv(packet, (DWORD)needle_enum_index, TLV_TYPE_MEMORY_SEARCH_NEEDLE_LEN, &needle_length_tlv) != ERROR_SUCCESS)
-		{
-			dprintf("[MEM SEARCH] Got needle, but no length. Defaulting to using strlen, meaning null-bytes won't be searched for.");
-			needle_length = strlen((char*)needle_buffer_tlv.buffer);
-			dprintf("[MEM SEARCH] Needle length: %u", needle_length);
-		}
-		else
-		{
-			dprintf("[MEM SEARCH] Getting needle length...");
-			needle_length = ntohl(*(PUINT)needle_length_tlv.buffer);
-			dprintf("[MEM SEARCH] Needle length: %u", needle_length);
-		}
+		// The header contains a null-terminator which we do not need.
+		const size_t needle_length = needle_buffer_tlv.header.length - 1;
 		dprintf("[MEM SEARCH] Allocating %u bytes of memory for regex needle", sizeof(struct regex_needle));
 		regex_needles[needle_enum_index] = (struct regex_needle*)malloc(sizeof(struct regex_needle));
 		if (regex_needles[needle_enum_index] == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for regex needle"); result = ERROR_OUTOFMEMORY; goto done; }
 
 		regex_needles[needle_enum_index]->length = needle_length;
-		regex_needles[needle_enum_index]->raw_needle_buffer = (char*)malloc(needle_length);
+		regex_needles[needle_enum_index]->raw_needle_buffer = (char*)malloc(needle_length * sizeof(char));
 		if (regex_needles[needle_enum_index]->raw_needle_buffer == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for raw needle buffer"); result = ERROR_OUTOFMEMORY; goto done; }
 		memcpy(regex_needles[needle_enum_index]->raw_needle_buffer, (char*)needle_buffer_tlv.buffer, needle_length);
 
