@@ -643,6 +643,13 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 						dprintf("[MEM SEARCH] -- ! FOUND A REGEX MATCH ! --");
 						dprintf("[MEM SEARCH] Address: %p", match_address);
 
+						if (match_length < min_match_length)
+						{
+							dprintf("[MEM SEARCH] Match length was too short, skipping.");
+							current_buffer_offset += (result + match_length);
+							continue;
+						}
+
 						dprintf("[MEM SEARCH] Creating results group");
 						
 						Packet* search_results = met_api->packet.create_group();
