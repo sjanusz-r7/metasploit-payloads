@@ -639,7 +639,7 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 
 					if (result != -1)
 					{
-						const size_t match_address = read_address + result;
+						const size_t match_address = read_address + current_buffer_offset + result;
 						dprintf("[MEM SEARCH] -- ! FOUND A REGEX MATCH ! --");
 						dprintf("[MEM SEARCH] Address: %p", match_address);
 
