@@ -498,6 +498,14 @@ DWORD request_sys_process_memory_search(Remote* remote, Packet* packet)
 	{
 		// The header contains a null-terminator which we do not need.
 		const size_t needle_length = needle_buffer_tlv.header.length - 1;
+
+		if (needle_length == 0)
+		{
+			dprintf("[MEM SEARCH] Got a needle length of 0");
+			result = ERROR_INVALID_PARAMETER;
+			goto done;
+		}
+
 		dprintf("[MEM SEARCH] Allocating %u bytes of memory for regex needle", sizeof(struct regex_needle));
 		regex_needles[needle_enum_index] = (struct regex_needle*)malloc(sizeof(struct regex_needle));
 		if (regex_needles[needle_enum_index] == NULL) { dprintf("[MEM SEARCH] Could not allocate memory for regex needle"); result = ERROR_OUTOFMEMORY; goto done; }
